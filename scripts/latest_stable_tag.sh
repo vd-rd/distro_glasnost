@@ -24,7 +24,7 @@ REPO_URL="$1"
 LATEST_TAG=$(git ls-remote --tags "$REPO_URL" \
   | awk '{print $2}' \
   | sed 's#refs/tags/##' \
-  | sed 's#\^\{\}##' \
+  | sed 's/\^{}//' \
   | sort -u \
   | grep -E '^v[0-9]+(\.[0-9]+)+$' \
   | sort -V \

@@ -18,12 +18,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Find latest stable Linux tag
+      - name: Find latest stable Linux tag (stable tree)
         id: find_tag
         shell: bash
         run: |
           set -euo pipefail
-          REPO_URL="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
+          REPO_URL="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git"
           LATEST_TAG=$(bash scripts/latest_stable_tag.sh "$REPO_URL")
 
           CURRENT_TAG=""
@@ -53,7 +53,7 @@ jobs:
             Automated update to Linux stable tag (non-rc).
             - Previous: ${{ steps.find_tag.outputs.current }}
             - New: ${{ steps.find_tag.outputs.latest }}
-            Source: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+            Source: https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
           branch: chore/update-kernel-${{ steps.find_tag.outputs.latest }}
           base: main
           signoff: true
