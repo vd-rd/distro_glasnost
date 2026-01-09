@@ -1,0 +1,18 @@
+board:
+  cpu:
+    vendor: microchip
+    arch: arm
+    name: at91sam9g20
+  memory: 
+    type: sdram
+    capacity: 64MB
+  flash:
+    present: true
+  sd:
+    present: true
+  radio:
+    wifi:
+      present: true
+      type: usb
+recovery:
+  build: true

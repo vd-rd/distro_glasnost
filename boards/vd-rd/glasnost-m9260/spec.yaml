@@ -1,0 +1,14 @@
+board:
+  cpu:
+    vendor: microchip
+    arch: arm
+    name: at91sam9260
+  memory: 
+    type: sdram
+    capacity: 64MB
+  flash:
+    present: true
+  sd:
+    present: true
+recovery:
+  build: true

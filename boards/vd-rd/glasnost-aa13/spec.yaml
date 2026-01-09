@@ -1,0 +1,18 @@
+board:
+  cpu:
+    vendor: allwinner
+    arch: arm
+    name: a13
+  memory: 
+    type: ddr3
+    capacity: 512MB
+  flash:
+    present: true
+  sd:
+    present: true
+  radio:
+    wifi:
+      present: true
+      type: usb
+recovery:
+  build: true

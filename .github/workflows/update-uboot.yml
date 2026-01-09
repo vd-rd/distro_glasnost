@@ -1,0 +1,63 @@
+name: Update U-Boot Version
+
+on:
+  schedule:
+    - cron: '0 6 1,15 * *'  # Run at 06:00 UTC on the 1st and 15th
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-uboot-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Find latest stable U-Boot tag
+        id: find_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          REPO_URL="https://source.denx.de/u-boot/u-boot.git"
+          LATEST_TAG=$(bash scripts/latest_stable_tag.sh "$REPO_URL")
+
+          CURRENT_TAG=""
+          if [[ -f versions/uboot.version ]]; then
+            CURRENT_TAG=$(tr -d '[:space:]' < versions/uboot.version || true)
+          fi
+
+          echo "latest=${LATEST_TAG}" >> "$GITHUB_OUTPUT"
+          echo "current=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Latest: ${LATEST_TAG} | Current: ${CURRENT_TAG}"
+
+      - name: Update version file if needed
+        if: steps.find_tag.outputs.latest != steps.find_tag.outputs.current
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf "%s\n" "${{ steps.find_tag.outputs.latest }}" > versions/uboot.version
+
+      - name: Create Pull Request
+        if: steps.find_tag.outputs.latest != steps.find_tag.outputs.current
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Update U-Boot to ${{ steps.find_tag.outputs.latest }}"
+          title: "Update U-Boot: ${{ steps.find_tag.outputs.current }} → ${{ steps.find_tag.outputs.latest }}"
+          body: |
+            Automated update to U-Boot stable tag.
+            - Previous: ${{ steps.find_tag.outputs.current }}
+            - New: ${{ steps.find_tag.outputs.latest }}
+            Source: https://source.denx.de/u-boot/u-boot
+          branch: chore/update-uboot-${{ steps.find_tag.outputs.latest }}
+          base: main
+          signoff: true
+
+      - name: No changes
+        if: steps.find_tag.outputs.latest == steps.find_tag.outputs.current
+        run: echo "U-Boot version is up to date."

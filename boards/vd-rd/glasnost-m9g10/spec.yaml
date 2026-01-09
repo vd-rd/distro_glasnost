@@ -1,0 +1,14 @@
+board:
+  cpu:
+    vendor: microchip
+    arch: arm
+    name: at91sam9g10
+  memory: 
+    type: sdram
+    capacity: 64MB
+  flash:
+    present: false
+  sd:
+    present: true
+recovery:
+  build: false

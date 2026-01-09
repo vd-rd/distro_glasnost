@@ -1,0 +1,18 @@
+board:
+  cpu:
+    vendor: allwinner
+    arch: arm
+    name: v3s
+  memory: 
+    type: ddr2
+    capacity: 64MB
+  flash:
+    present: true
+  sd:
+    present: true
+  radio:
+    wifi:
+      present: true
+      type: sdio
+recovery:
+  build: true

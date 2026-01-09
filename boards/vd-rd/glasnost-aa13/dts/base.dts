@@ -1,0 +1,267 @@
+/*
+ * Copyright 2015 Hans de Goede <hdegoede@redhat.com>
+ * Copyright 2025 vd-rd
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/dts-v1/;
+#include "sun5i-a13.dtsi"
+
+#include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+#include "sunxi-common-regulators.dtsi"
+
+/ {
+	model = "Glasnost AA13";
+	compatible = "vd-rd,glasnost-aa13", "allwinner,sun5i-a13";
+
+    aliases {
+		serial0 = &uart1;
+		led-boot = &led_blue;
+		led-failsafe = &led_red;
+		led-running = &led_green;
+	};
+
+    chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+    leds {
+        compatible = "gpio-leds";
+        
+        led_red: led-red {
+            label = "red:status";
+            gpios = <&pio 3 14 GPIO_ACTIVE_LOW>; /* PC14 */
+        };
+        led_green: led-green {
+            label = "green:status";
+            gpios = <&pio 3 15 GPIO_ACTIVE_LOW>; /* PC15 */
+        };
+        led_blue: led-blue {
+            label = "blue:status";
+            gpios = <&pio 3 19 GPIO_ACTIVE_LOW>; /* PC19 */
+        };
+    };
+
+    config {
+        bootdelay = <2>;
+        u-boot,boot-led = "blue:status";
+        u-boot,error-led = "red:status";
+        u-boot,mmc-env-partition = <1>;
+    };
+};
+
+&cpu0 {
+	cpu-supply = <&reg_dcdc2>;
+};
+
+&ehci0 {
+	status = "okay";
+};
+
+&ohci0 {
+	status = "okay";
+};
+
+&i2c0 {
+    pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	status = "okay";
+	axp209: pmic@34 {
+		reg = <0x34>;
+		interrupts = <0>;
+	};
+};
+
+#include "axp209.dtsi"
+
+&ac_power_supply {
+	status = "okay";
+};
+
+&battery_power_supply {
+	status = "okay";
+};
+
+&lradc {
+	vref-supply = <&reg_ldo2>;
+    status = "okay";
+
+	button-user {
+		label = "User Button";
+		linux,code = <KEY_VOLUMEUP>;
+		channel = <0>;
+		voltage = <200000>;
+	};
+};
+
+&reg_dcdc2 {
+	regulator-always-on;
+	regulator-min-microvolt = <1200000>;
+	regulator-max-microvolt = <1450000>;
+	regulator-name = "vdd-cpu";
+};
+
+&reg_dcdc3 {
+	regulator-always-on;
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vdd-io";
+};
+
+&reg_ldo1 {
+	regulator-name = "vdd-rtc";
+};
+
+&reg_ldo2 {
+	regulator-always-on;
+	regulator-min-microvolt = <3000000>;
+	regulator-max-microvolt = <3000000>;
+	regulator-name = "avcc";
+};
+
+&reg_ldo3 {
+	regulator-min-microvolt = <3300000>;
+	regulator-max-microvolt = <3300000>;
+	regulator-name = "vcc-wifi";
+};
+
+&reg_usb0_vbus {
+	gpio = <&pio 6 12 GPIO_ACTIVE_HIGH>; /* PG12 */
+	status = "okay";
+};
+
+
+&mmc0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc0_pins>;
+	vmmc-supply = <&reg_vcc3v0>;
+	bus-width = <4>;
+	cd-gpios = <&pio 1 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* PB4 */
+	status = "okay";
+};
+
+&spi0 {
+    pinctrl-names = "default";
+	pinctrl-0 = <&spi0_pc_pins &spi0_cs0_pc_pin>;
+    status = "okay";
+
+    flash@0 {
+        #address-cells = <1>;
+        #size-cells = <1>;
+        compatible = "winbond,w25q128", "jedec,spi-nor";
+        reg = <0>;
+        spi-max-frequency = <40000000>;
+
+        partitions {
+            compatible = "fixed-partitions";
+            #address-cells = <1>;
+            #size-cells = <1>;
+
+            partition@0 {
+                label = "u-boot";
+				reg = <0x0 0x80000>;        /* 512 KB */
+            };
+
+			partition@80000 {
+                label = "env";
+				reg = <0x80000 0x20000>;    /* 128 KB */
+            };
+
+			partition@a0000 {
+                label = "kernel";
+				reg = <0xa0000 0x400000>;   /* 4 MB */
+            };
+
+			partition@4a0000 {
+                label = "rootfs";
+				reg = <0x4a0000 0x800000>;  /* 8 MB */
+            };
+
+            partition@ca0000 {
+                label = "userdata";
+                reg = <0xca0000 0x360000>;  /* ~3.4 MB */
+            };
+        };
+    };
+};
+
+&otg_sram {
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&uart1_pg_pins>;
+	status = "okay";
+};
+
+&usb_otg {
+	dr_mode = "otg";
+	status = "okay";
+};
+
+&usb_power_supply {
+	status = "okay";
+};
+
+&usbphy {
+	usb0_id_det-gpios = <&pio 6 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>; /* PG11 */
+	// usb0_vbus_det-gpios = <&pio 6 1 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>; /* PG1 */
+	usb0_vbus_power-supply = <&usb_power_supply>;
+	usb0_vbus-supply = <&reg_usb0_vbus>;
+	usb1_vbus-supply = <&reg_ldo3>;
+	status = "okay";
+};
+
+&pio {
+	spi0_pc_pins: spi0-pc-pins {
+		pins = "PC0", "PC1", "PC2";
+		function = "spi0";
+	};
+
+	spi0_cs0_pc_pin: spi0-cs0-pc-pin {
+		pins = "PC3";
+		function = "spi0";
+	};
+};
