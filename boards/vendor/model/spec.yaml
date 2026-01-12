@@ -1,0 +1,20 @@
+board:
+  cpu:
+    vendor: generic
+    arch: x86
+    name: emu
+  memory: 
+    type: ddr
+    capacity: 512MB
+  drive:
+    present: true
+recovery:
+  build: true
+u-boot:
+  mainline: true
+  config: qemu
+  # pinned: v2026.01
+kernel:
+  mainline: true
+  config: x86
+  # pinned: v6.17.1

@@ -12,3 +12,6 @@ board:
     present: true
 recovery:
   build: false
+bootloader:
+  spl: at91bootstrap
+  tpl: u-boot

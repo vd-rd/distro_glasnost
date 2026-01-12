@@ -16,3 +16,5 @@ board:
       type: usb
 recovery:
   build: true
+bootloader:
+  spl: u-boot

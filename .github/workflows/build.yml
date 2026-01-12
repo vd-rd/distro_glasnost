@@ -1,0 +1,81 @@
+name: Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  determine-matrix:
+    name: Determine Build Matrix
+    runs-on: ubuntu-latest
+    outputs:
+      include: ${{ steps.matrix.outputs.include }}
+      total: ${{ steps.matrix.outputs.total }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          # Get the base branch (usually main)
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+          
+          # Get changed files
+          git diff --name-only "$BASE_REF" "$HEAD_REF" > changed_files.txt
+          
+          echo "Changed files:"
+          cat changed_files.txt
+
+      - name: Determine matrix
+        id: matrix
+        run: |
+          python3 scripts/determine_build_matrix.py \
+            --github-output \
+            < changed_files.txt >> $GITHUB_OUTPUT
+
+      - name: Show matrix
+        run: |
+          echo "Building ${{ steps.matrix.outputs.total }} boards"
+          echo "Matrix: ${{ steps.matrix.outputs.include }}"
+
+  build:
+    name: Build ${{ matrix.board }} (${{ matrix.arch }})
+    needs: determine-matrix
+    if: needs.determine-matrix.outputs.total > 0
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.determine-matrix.outputs.include) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build for ${{ matrix.arch }}
+        uses: ./.github/workflows/build-${{ matrix.arch }}.yml
+        with:
+          board: ${{ matrix.board }}
+
+      - name: Upload artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.board }}-build
+          path: |
+            build/*.deb
+            build/*.img
+          retention-days: 90
+
+      - name: Report build status
+        if: always()
+        run: |
+          echo "Build completed for ${{ matrix.board }} (${{ matrix.arch }})"
+          # TODO: Call scripts/manage_build_issues.py to track failures
