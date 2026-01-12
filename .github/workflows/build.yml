@@ -51,12 +51,11 @@ jobs:
   build:
     name: Build ${{ matrix.board }} (${{ matrix.arch }})
     needs: determine-matrix
-    if: ${{ fromJson(needs.determine-matrix.outputs.total) > 0 }}
+    if: needs.determine-matrix.outputs.total != '0'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        board: ${{ fromJson(needs.determine-matrix.outputs.boards) }}
         include: ${{ fromJson(needs.determine-matrix.outputs.include) }}
     steps:
       - name: Checkout
