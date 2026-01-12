@@ -1,0 +1,16 @@
+name: Build AArch64 Stub
+
+on:
+  workflow_call:
+    inputs:
+      board:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stub build
+        run: |
+          echo "Stub build for ${{ inputs.board }} (aarch64)"

@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       include: ${{ steps.matrix.outputs.include }}
+      boards: ${{ steps.matrix.outputs.boards }}
       total: ${{ steps.matrix.outputs.total }}
     steps:
       - name: Checkout
@@ -44,16 +45,18 @@ jobs:
       - name: Show matrix
         run: |
           echo "Building ${{ steps.matrix.outputs.total }} boards"
-          echo "Matrix: ${{ steps.matrix.outputs.include }}"
+          echo "Boards: ${{ steps.matrix.outputs.boards }}"
+          echo "Matrix include: ${{ steps.matrix.outputs.include }}"
 
   build:
     name: Build ${{ matrix.board }} (${{ matrix.arch }})
     needs: determine-matrix
-    if: needs.determine-matrix.outputs.total > 0
+    if: ${{ fromJson(needs.determine-matrix.outputs.total) > 0 }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        board: ${{ fromJson(needs.determine-matrix.outputs.boards) }}
         include: ${{ fromJson(needs.determine-matrix.outputs.include) }}
     steps:
       - name: Checkout
